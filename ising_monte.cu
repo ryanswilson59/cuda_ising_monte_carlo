@@ -84,11 +84,13 @@ __global__ void monte_run(int *grd,int pitch,int *acc,int offx,int offy,float be
 
 __global__ void reduce_dif(int *nums, int *acc,int ind, int n){
 	int x=threadIdx.x;
+	int l=n*n;
 	for(int stride=(n*n+1)>>1;stride>=1;stride=(stride+1)>>1){
 		__syncthreads();
-		if(x<2*(stride>>1)){
+		if(x+stride<l){
 			nums[x]+=nums[x+stride];
 		}
+		l=(l+1)>>1;
 		if(stride==1){
 			stride=0;
 		}
@@ -104,7 +106,7 @@ int* run_sim(float beta,int w,int h,int steps){
 	hist= (int *) malloc(steps*sizeof(int));
 
 	int* devPtr;
-	size_t pitch;
+	//size_t pitch;
 	//cudaMallocPitch(&devPtr,&pitch,w*sizeof(int),h);
 	cudaMalloc(&devPtr,w*h*sizeof(int));
 	cudaMemset(devPtr,0,w*h*sizeof(int));
@@ -208,7 +210,6 @@ int main(int argc, char **argv){
 		t_steps=5;
 		size_l[0]=4;
 	}
-	printf("test");
 	for(int i=0;i<l;i++){
 		int h=size_l[i];int w=size_l[i];
 		for(int t_step=0;t_step<t_steps;t_step++){
@@ -229,7 +230,6 @@ int main(int argc, char **argv){
 			fclose(fp);
 
 			free(res);
-			printf("\r finished: t step=%d l=%d           ",t_step,w);
 		}
 	}
 	free(size_l);
